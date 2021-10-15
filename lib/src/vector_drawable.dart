@@ -867,6 +867,9 @@ class DrawableRoot implements DrawableParent {
   /// Contains reusable definitions such as gradients and clipPaths.
   final DrawableDefinitionServer definitions;
 
+  /// Path containing all children paths
+  Path get path => _createPath();
+
   /// The [DrawableStyle] for inheritence.
   @override
   final DrawableStyle? style;
@@ -877,6 +880,7 @@ class DrawableRoot implements DrawableParent {
   /// If the `viewBox` dimensions are not 1:1 with `desiredSize`, will scale to
   /// the smaller dimension and translate to center the image along the larger
   /// dimension.
+
   void scaleCanvasToViewBox(Canvas canvas, Size desiredSize) {
     final Matrix4 transform = Matrix4.identity();
     if (render_picture.scaleCanvasToViewBox(
@@ -887,6 +891,15 @@ class DrawableRoot implements DrawableParent {
     )) {
       canvas.transform(transform.storage);
     }
+  }
+
+  Path _createPath(){
+    final Path _path = Path();
+    for (Drawable child in children) {
+      if (child is DrawableShape)
+        _path.addPath(child.path, Offset.zero);
+    }
+    return _path;
   }
 
   /// Clips the canvas to a rect corresponding to the `viewBox`.
