@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show File;
 import 'dart:typed_data';
 import 'dart:ui' show Picture;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_svg/src/svg/default_theme.dart';
 
 import 'parser.dart';
 import 'src/picture_provider.dart';
 import 'src/picture_stream.dart';
 import 'src/render_picture.dart';
+import 'src/svg/default_theme.dart';
 import 'src/svg/theme.dart';
+import 'src/utilities/file.dart';
 import 'src/vector_drawable.dart';
 
 /// Instance for [Svg]'s utility methods, which can produce a [DrawableRoot]
@@ -43,6 +43,9 @@ class Svg {
   ///
   /// The `colorFilter` property will be applied to any [Paint] objects used during drawing.
   ///
+  /// The `theme` argument, if provided, will override the default theme
+  /// used when parsing SVG elements.
+  ///
   /// The [key] will be used for debugging purposes.
   Future<PictureInfo> svgPictureDecoder(
     Uint8List raw,
@@ -60,6 +63,7 @@ class Svg {
       picture: pic,
       viewport: svgRoot.viewport.viewBoxRect,
       size: svgRoot.viewport.size,
+      compatibilityTester: svgRoot.compatibilityTester,
     );
   }
 
@@ -71,6 +75,9 @@ class Svg {
   /// behavior or additional memory overhead.
   ///
   /// The `colorFilter` property will be applied to any [Paint] objects used during drawing.
+  ///
+  /// The `theme` argument, if provided, will override the default theme
+  /// used when parsing SVG elements.
   ///
   /// The [key] will be used for debugging purposes.
   Future<PictureInfo> svgPictureStringDecoder(
@@ -90,6 +97,7 @@ class Svg {
       picture: pic,
       viewport: svgRoot.viewport.viewBoxRect,
       size: svgRoot.viewport.size,
+      compatibilityTester: svgRoot.compatibilityTester,
     );
   }
 
@@ -235,7 +243,7 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
-    this.currentColor,
+    this.theme,
   }) : super(key: key);
 
   /// Instantiates a widget that renders an SVG picture from an [AssetBundle].
@@ -264,8 +272,8 @@ class SvgPicture extends StatefulWidget {
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
-  /// The `currentColor` argument, if provided, will override the default color
-  /// of any SVG element that inherits its color.
+  /// The `theme` argument, if provided, will override the default theme
+  /// used when parsing SVG elements.
   ///
   /// ## Assets in packages
   ///
@@ -336,7 +344,7 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
-    this.currentColor,
+    this.theme,
   })  : pictureProvider = ExactAssetPicture(
           allowDrawingOutsideViewBox == true
               ? svgStringDecoderOutsideViewBoxBuilder
@@ -374,8 +382,8 @@ class SvgPicture extends StatefulWidget {
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
-  /// The `currentColor` argument, if provided, will override the default color
-  /// of any SVG element that inherits its color.
+  /// The `theme` argument, if provided, will override the default theme
+  /// used when parsing SVG elements.
   ///
   /// All network images are cached regardless of HTTP headers.
   ///
@@ -400,7 +408,7 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
-    this.currentColor,
+    this.theme,
   })  : pictureProvider = NetworkPicture(
           allowDrawingOutsideViewBox == true
               ? svgByteDecoderOutsideViewBoxBuilder
@@ -437,8 +445,8 @@ class SvgPicture extends StatefulWidget {
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
-  /// The `currentColor` argument, if provided, will override the default color
-  /// of any SVG element that inherits its color.
+  /// The `theme` argument, if provided, will override the default theme
+  /// used when parsing SVG elements.
   ///
   /// On Android, this may require the
   /// `android.permission.READ_EXTERNAL_STORAGE` permission.
@@ -460,7 +468,7 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
-    this.currentColor,
+    this.theme,
   })  : pictureProvider = FilePicture(
           allowDrawingOutsideViewBox == true
               ? svgByteDecoderOutsideViewBoxBuilder
@@ -496,8 +504,8 @@ class SvgPicture extends StatefulWidget {
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
-  /// The `currentColor` argument, if provided, will override the default color
-  /// of any SVG element that inherits its color.
+  /// The `theme` argument, if provided, will override the default theme
+  /// used when parsing SVG elements.
   ///
   /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
   SvgPicture.memory(
@@ -516,7 +524,7 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
-    this.currentColor,
+    this.theme,
   })  : pictureProvider = MemoryPicture(
           allowDrawingOutsideViewBox == true
               ? svgByteDecoderOutsideViewBoxBuilder
@@ -552,8 +560,8 @@ class SvgPicture extends StatefulWidget {
   /// The `color` and `colorBlendMode` arguments, if specified, will be used to set a
   /// [ColorFilter] on any [Paint]s created for this drawing.
   ///
-  /// The `currentColor` argument, if provided, will override the default color
-  /// of any SVG element that inherits its color.
+  /// The `theme` argument, if provided, will override the default theme
+  /// used when parsing SVG elements.
   ///
   /// If [excludeFromSemantics] is true, then [semanticLabel] will be ignored.
   SvgPicture.string(
@@ -572,7 +580,7 @@ class SvgPicture extends StatefulWidget {
     this.excludeFromSemantics = false,
     this.clipBehavior = Clip.hardEdge,
     this.cacheColorFilter = false,
-    this.currentColor,
+    this.theme,
   })  : pictureProvider = StringPicture(
           allowDrawingOutsideViewBox == true
               ? svgStringDecoderOutsideViewBoxBuilder
@@ -595,50 +603,49 @@ class SvgPicture extends StatefulWidget {
 
   /// A [PictureInfoDecoderBuilder] for [Uint8List]s that will clip to the viewBox.
   static final PictureInfoDecoderBuilder<Uint8List> svgByteDecoderBuilder =
-      (Color? currentColor) =>
+      (SvgTheme theme) =>
           (Uint8List bytes, ColorFilter? colorFilter, String key) =>
               svg.svgPictureDecoder(
                 bytes,
                 false,
                 colorFilter,
                 key,
-                theme: SvgTheme(currentColor: currentColor),
+                theme: theme,
               );
 
   /// A [PictureInfoDecoderBuilder] for strings that will clip to the viewBox.
   static final PictureInfoDecoderBuilder<String> svgStringDecoderBuilder =
-      (Color? currentColor) =>
-          (String data, ColorFilter? colorFilter, String key) =>
-              svg.svgPictureStringDecoder(
-                data,
-                false,
-                colorFilter,
-                key,
-                theme: SvgTheme(currentColor: currentColor),
-              );
+      (SvgTheme theme) => (String data, ColorFilter? colorFilter, String key) =>
+          svg.svgPictureStringDecoder(
+            data,
+            false,
+            colorFilter,
+            key,
+            theme: theme,
+          );
 
   /// A [PictureInfoDecoderBuilder] for [Uint8List]s that will not clip to the viewBox.
   static final PictureInfoDecoderBuilder<Uint8List>
-      svgByteDecoderOutsideViewBoxBuilder = (Color? currentColor) =>
+      svgByteDecoderOutsideViewBoxBuilder = (SvgTheme theme) =>
           (Uint8List bytes, ColorFilter? colorFilter, String key) =>
               svg.svgPictureDecoder(
                 bytes,
                 true,
                 colorFilter,
                 key,
-                theme: SvgTheme(currentColor: currentColor),
+                theme: theme,
               );
 
   /// A [PictureInfoDecoderBuilder] for [String]s that will not clip to the viewBox.
   static final PictureInfoDecoderBuilder<String>
-      svgStringDecoderOutsideViewBoxBuilder = (Color? currentColor) =>
+      svgStringDecoderOutsideViewBoxBuilder = (SvgTheme theme) =>
           (String data, ColorFilter? colorFilter, String key) =>
               svg.svgPictureStringDecoder(
                 data,
                 true,
                 colorFilter,
                 key,
-                theme: SvgTheme(currentColor: currentColor),
+                theme: theme,
               );
 
   /// If specified, the width to use for the SVG.  If unspecified, the SVG
@@ -725,9 +732,8 @@ class SvgPicture extends StatefulWidget {
   /// This defaults to false and must not be null.
   final bool cacheColorFilter;
 
-  /// The default color applied to SVG elements that inherit the color property.
-  /// See: https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#currentcolor_keyword
-  final Color? currentColor;
+  /// The theme used when parsing SVG elements.
+  final SvgTheme? theme;
 
   @override
   State<SvgPicture> createState() => _SvgPictureState();
@@ -735,6 +741,7 @@ class SvgPicture extends StatefulWidget {
 
 class _SvgPictureState extends State<SvgPicture> {
   PictureInfo? _picture;
+  PictureHandle? _handle;
   PictureStream? _pictureStream;
   bool _isListeningToStream = false;
 
@@ -762,12 +769,37 @@ class _SvgPictureState extends State<SvgPicture> {
     super.reassemble();
   }
 
-  /// Updates the `currentColor` of the picture provider based on either
-  /// the widget's `currentColor` property or [DefaultSvgTheme].
+  /// Updates the `currentColor` of the picture provider based on
+  /// either the widget's [SvgTheme] or an inherited [DefaultSvgTheme].
+  ///
+  /// Updates the `fontSize` of the picture provider based on
+  /// either the widget's [SvgTheme], an inherited [DefaultSvgTheme]
+  /// or an inherited [DefaultTextStyle]. If the property does not exist,
+  /// then the font size defaults to 14.
   void _updatePictureProvider() {
-    final SvgTheme? svgTheme = DefaultSvgTheme.of(context)?.theme;
-    final Color? currentColor = widget.currentColor ?? svgTheme?.currentColor;
-    widget.pictureProvider.currentColor = currentColor;
+    final SvgTheme? defaultSvgTheme = DefaultSvgTheme.of(context)?.theme;
+    final TextStyle defaultTextStyle = DefaultTextStyle.of(context).style;
+
+    final Color? currentColor =
+        widget.theme?.currentColor ?? defaultSvgTheme?.currentColor;
+
+    final double fontSize = widget.theme?.fontSize ??
+        defaultSvgTheme?.fontSize ??
+        defaultTextStyle.fontSize ??
+        // Fallback to the default font size if a font size is missing in DefaultTextStyle.
+        // See: https://api.flutter.dev/flutter/painting/TextStyle/fontSize.html
+        14.0;
+
+    final double xHeight = widget.theme?.xHeight ??
+        defaultSvgTheme?.xHeight ??
+        // Fallback to the font size divided by 2.
+        fontSize / 2;
+
+    widget.pictureProvider.theme = SvgTheme(
+      currentColor: currentColor,
+      fontSize: fontSize,
+      xHeight: xHeight,
+    );
   }
 
   void _resolveImage() {
@@ -779,6 +811,8 @@ class _SvgPictureState extends State<SvgPicture> {
 
   void _handleImageChanged(PictureInfo? imageInfo, bool synchronousCall) {
     setState(() {
+      _handle?.dispose();
+      _handle = imageInfo?.createHandle();
       _picture = imageInfo;
     });
   }
@@ -791,8 +825,9 @@ class _SvgPictureState extends State<SvgPicture> {
       return;
     }
 
-    if (_isListeningToStream)
+    if (_isListeningToStream) {
       _pictureStream!.removeListener(_handleImageChanged);
+    }
 
     _pictureStream = newStream;
     if (_isListeningToStream) {
@@ -820,6 +855,8 @@ class _SvgPictureState extends State<SvgPicture> {
   void dispose() {
     assert(_pictureStream != null);
     _stopListeningToStream();
+    _handle?.dispose();
+    _handle = null;
     super.dispose();
   }
 

@@ -98,12 +98,6 @@ wrappers for getting assets from multiple sources and caching the resultant
 certainly can do that in Flutter, but you then lose some of the benefit of
 having a vector format to begin with.
 
-While I'm making every effort to avoid needlessly changing the API, it's not
-guarnateed to be stable yet (hence the pre-1.0.0 version). To date, the biggest
-change is deprecating the `SvgImage` widgets in favor of `SvgPicture` - it
-became very confusing to maintain that name, as `Picture`s are the underlying
-mechanism for rendering rather than `Image`s.
-
 See [main.dart](/../master/example/lib/main.dart) for a complete sample.
 
 ## Check SVG compatibility
@@ -134,19 +128,6 @@ try {
   interactive.
 - You want to load SVGs dynamically from network sources at runtime.
 - You want to paint SVG data and render it to an image.
-
-## TODO
-
-This list is not very well ordered. I'm mainly picking up things that seem
-interesting or useful, or where I've gotten a request to fix something/example
-of something that's broken.
-
-- Support Radial gradients that use percentages in the offsets.
-- Dash path with percentage dasharray values (need good examples).
-- Markers.
-- Filters/effects (will require upstream engine changes, but doable).
-- Android Vector Drawable support beyond PoC - I'm willing to put more time into
-  this if there's actually demand, but it doesn't come up often.
 
 ## Out of scope/non-goals
 
@@ -195,3 +176,4 @@ scope" (above).
 
 - [Rive](https://rive.app/) supports importing SVGs and animating vector graphics.
 - [FlutterShapeMaker](https://fluttershapemaker.com) supports converting SVGs to [CustomPaint](https://api.flutter.dev/flutter/widgets/CustomPaint-class.html) widgets.
+- [Jovial SVG](https://pub.dev/packages/jovial_svg) supports a slightly different feature set and a fast binary format.

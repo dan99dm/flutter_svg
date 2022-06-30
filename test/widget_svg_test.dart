@@ -597,10 +597,8 @@ void main() {
   testWidgets('Nested SVG elements report a FlutterError',
       (WidgetTester tester) async {
     await svg.fromSvgString(
-      '<svg viewBox="0 0 166 202"><svg viewBox="0 0 166 202"></svg></svg>',
-      'test',
-      theme: const SvgTheme(),
-    );
+        '<svg viewBox="0 0 166 202"><svg viewBox="0 0 166 202"></svg></svg>',
+        'test');
     final UnsupportedError error = tester.takeException() as UnsupportedError;
     expect(error.message, 'Unsupported nested <svg> element.');
   });
@@ -752,6 +750,210 @@ void main() {
     expect(renderObject.clipBehavior, equals(Clip.antiAlias));
   });
 
+  group('SvgPicture respects em units', () {
+    testWidgets('circle (cx, cy, r)', (WidgetTester tester) async {
+      final GlobalKey key = GlobalKey();
+
+      const String svgStr = '''
+<svg width="800px" height="600px" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="0.5em" cy="0.5em" r="0.5em" fill="orange" />
+</svg>
+''';
+
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: key,
+          child: SvgPicture.string(
+            svgStr,
+            theme: const SvgTheme(fontSize: 600),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await _checkWidgetAndGolden(key, 'circle.em_ex.png');
+    });
+
+    testWidgets('rect (x, y, width, height, rx, ry)',
+        (WidgetTester tester) async {
+      final GlobalKey key = GlobalKey();
+
+      const String svgStr = '''
+<svg width="800px" height="600px" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2em" y="1.5em" width="4em" height="3em" rx="0.5em" ry="0.5em" fill="orange" />
+</svg>
+''';
+
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: key,
+          child: SvgPicture.string(
+            svgStr,
+            theme: const SvgTheme(fontSize: 100),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await _checkWidgetAndGolden(key, 'rect.em_ex.png');
+    });
+
+    testWidgets('ellipse (cx, cy, rx, ry)', (WidgetTester tester) async {
+      final GlobalKey key = GlobalKey();
+
+      const String svgStr = '''
+<svg width="800px" height="600px" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="7em" cy="4em" rx="1em" ry="2em" fill="orange" />
+</svg>
+''';
+
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: key,
+          child: SvgPicture.string(
+            svgStr,
+            theme: const SvgTheme(fontSize: 100),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await _checkWidgetAndGolden(key, 'ellipse.em_ex.png');
+    });
+
+    testWidgets('line (x1, y1, x2, y2)', (WidgetTester tester) async {
+      final GlobalKey key = GlobalKey();
+
+      const String svgStr = '''
+<svg width="800px" height="600px" xmlns="http://www.w3.org/2000/svg">
+  <line x1="0em" y1="6em" x2="4em" y2="0em" stroke="orange" />
+  <line x1="4em" y1="0em" x2="8em" y2="6em" stroke="orange" />
+</svg>
+''';
+
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: key,
+          child: SvgPicture.string(
+            svgStr,
+            theme: const SvgTheme(fontSize: 100),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await _checkWidgetAndGolden(key, 'line.em_ex.png');
+    });
+  });
+
+  group('SvgPicture respects ex units', () {
+    testWidgets('circle (cx, cy, r)', (WidgetTester tester) async {
+      final GlobalKey key = GlobalKey();
+
+      const String svgStr = '''
+<svg width="800px" height="600px" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="0.5ex" cy="0.5ex" r="0.5ex" fill="orange" />
+</svg>
+''';
+
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: key,
+          child: SvgPicture.string(
+            svgStr,
+            theme: const SvgTheme(
+              fontSize: 1500,
+              xHeight: 600,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await _checkWidgetAndGolden(key, 'circle.em_ex.png');
+    });
+
+    testWidgets('rect (x, y, width, height, rx, ry)',
+        (WidgetTester tester) async {
+      final GlobalKey key = GlobalKey();
+
+      const String svgStr = '''
+<svg width="800px" height="600px" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2ex" y="1.5ex" width="4ex" height="3ex" rx="0.5ex" ry="0.5ex" fill="orange" />
+</svg>
+''';
+
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: key,
+          child: SvgPicture.string(
+            svgStr,
+            theme: const SvgTheme(
+              fontSize: 300,
+              xHeight: 100,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await _checkWidgetAndGolden(key, 'rect.em_ex.png');
+    });
+
+    testWidgets('ellipse (cx, cy, rx, ry)', (WidgetTester tester) async {
+      final GlobalKey key = GlobalKey();
+
+      const String svgStr = '''
+<svg width="800px" height="600px" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="7ex" cy="4ex" rx="1ex" ry="2ex" fill="orange" />
+</svg>
+''';
+
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: key,
+          child: SvgPicture.string(
+            svgStr,
+            theme: const SvgTheme(
+              fontSize: 300,
+              xHeight: 100,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await _checkWidgetAndGolden(key, 'ellipse.em_ex.png');
+    });
+
+    testWidgets('line (x1, y1, x2, y2)', (WidgetTester tester) async {
+      final GlobalKey key = GlobalKey();
+
+      const String svgStr = '''
+<svg width="800px" height="600px" xmlns="http://www.w3.org/2000/svg">
+  <line x1="0ex" y1="6ex" x2="4ex" y2="0ex" stroke="orange" />
+  <line x1="4ex" y1="0ex" x2="8ex" y2="6ex" stroke="orange" />
+</svg>
+''';
+
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: key,
+          child: SvgPicture.string(
+            svgStr,
+            theme: const SvgTheme(
+              fontSize: 300,
+              xHeight: 100,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await _checkWidgetAndGolden(key, 'line.em_ex.png');
+    });
+  });
+
   testWidgets('SvgPicture - two of the same', (WidgetTester tester) async {
     // Regression test to make sure the same SVG can render twice in the same
     // view. If layers are incorrectly reused, this will fail.
@@ -772,6 +974,113 @@ void main() {
       matchesGoldenFile('golden_widget/two_of_same.png'),
     );
   });
+
+  testWidgets(
+      'Update widget without a cache does not result in an disposed picture',
+      (WidgetTester tester) async {
+    final int oldCacheSize = PictureProvider.cache.maximumSize;
+    PictureProvider.cache.maximumSize = 0;
+    final GlobalKey key = GlobalKey();
+
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: SvgPicture(
+            FakePictureProvider(
+              SvgPicture.svgStringDecoderBuilder,
+              simpleSvg,
+            ),
+            key: key),
+      ),
+    );
+
+    expect(find.byKey(key), findsOneWidget);
+
+    // Update the widget with a new incompatible key.
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: SvgPicture(
+            FakePictureProvider(
+              SvgPicture.svgStringDecoderBuilder,
+              stickFigureSvgStr,
+            ),
+            key: key),
+      ),
+    );
+
+    expect(find.byKey(key), findsOneWidget);
+    await tester.pumpAndSettle();
+    PictureProvider.cache.maximumSize = oldCacheSize;
+  });
+
+  testWidgets('state maintains a handle', (WidgetTester tester) async {
+    final int oldCacheSize = PictureProvider.cache.maximumSize;
+    PictureProvider.cache.maximumSize = 1;
+    final GlobalKey key = GlobalKey();
+    final FakePictureProvider provider = FakePictureProvider(
+      SvgPicture.svgStringDecoderBuilder,
+      simpleSvg,
+    );
+
+    final PictureStream stream = provider.resolve(
+      createLocalPictureConfiguration(key.currentContext),
+    );
+    final Completer<PictureInfo> completer = Completer<PictureInfo>();
+    void listener(PictureInfo? info, bool syncCall) {
+      completer.complete(info!);
+    }
+
+    stream.addListener(listener);
+
+    final PictureInfo info = await completer.future;
+    expect(info.debugHandleCount, 1);
+    stream.removeListener(listener);
+    // Still in cache.
+    expect(info.debugHandleCount, 1);
+
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: SvgPicture(provider, key: key),
+      ),
+    );
+    expect(find.byKey(key), findsOneWidget);
+    expect(info.debugHandleCount, 3);
+    PictureProvider.cache.clear();
+    expect(info.debugHandleCount, 3);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    expect(info.debugHandleCount, 0);
+
+    PictureProvider.cache.maximumSize = oldCacheSize;
+  });
+}
+
+class FakePictureProvider extends StringPicture {
+  FakePictureProvider(
+    PictureInfoDecoderBuilder<String> decoderBuilder,
+    String string,
+  ) : super(decoderBuilder, string);
+
+  int resolveCount = 0;
+
+  @override
+  PictureStream resolve(
+    PictureConfiguration picture, {
+    PictureErrorListener? onError,
+  }) {
+    resolveCount += 1;
+    return super.resolve(picture, onError: onError);
+  }
+
+  @override
+  // ignore: hash_and_equals, avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    // Picture providers should be compared based on key. Make sure tests don't
+    // cheat this check by using an identical provider.
+    return false;
+  }
 }
 
 class FakeAssetBundle extends Fake implements AssetBundle {
